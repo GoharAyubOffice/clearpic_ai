@@ -1,5 +1,5 @@
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException
-from fastapi.responses import Response
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request
+from fastapi.responses import Response, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from u2net_infer import remove_background
 from ai_bg_generator import generate_ai_background, compose_subject_on_background
@@ -11,44 +11,41 @@ import logging
 from typing import List, Dict
 from routes import webhooks, auth, credits, subscription
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-# Initialize FastAPI
-app = FastAPI(
-    title="ClearPic.AI API",
-    description="API for removing backgrounds from images using U2NET",
-    version="1.0.0"
-)
+app = FastAPI(title="ClearPic API")
 
-# Enable CORS
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],  # In production, replace with your frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
+# Include routers
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(credits.router, prefix="/credits", tags=["credits"])
 app.include_router(subscription.router, prefix="/subscription", tags=["subscription"])
+app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 
-# Root endpoint
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Global error handler caught: {str(exc)}", exc_info=True)
+    return JSONResponse(
+        status_code=400,
+        content={"detail": str(exc)}
+    )
+
 @app.get("/")
 async def root():
-    return {
-        "message": "Welcome to ClearPic.AI API",
-        "endpoints": {
-            "/remove-bg": "POST - Remove background from an image",
-            "/replace-bg": "POST - Replace background with AI-generated image",
-            "/rewrite-prompt": "POST - Rewrite a prompt",
-            "/prompts/{category}": "GET - Get prompts for a category",
-            "/prompt-categories": "GET - Get all prompt categories"
-        }
-    }
+    return {"message": "Welcome to ClearPic API"}
 
 # Basic background removal
 @app.post("/remove-bg")
