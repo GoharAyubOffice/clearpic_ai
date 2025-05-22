@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
 import logging
 from services.supabase_service import supabase_service
+import traceback
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -25,42 +26,49 @@ class TokenResponse(BaseModel):
 
 @router.post("/register", response_model=TokenResponse)
 async def register_user(user: UserCreate):
-    pass
+    try:
+        logger.info(f"Registering new user: {user.email}")
+        response = await supabase_service.sign_up(user.email, user.password, user.full_name)
+
+        if not response.user:
+            raise HTTPException(status_code=400, detail="Registration failed: No user returned")
+
+        logger.info("Registration successful. Email verification required.")
+
+        return {
+            "access_token": "",
+            "token_type": "bearer",
+            "user_id": response.user.id
+        }
+
+    except Exception as e:
+        logger.error("Register error:\n" + traceback.format_exc())
+        raise HTTPException(status_code=400, detail=f"Registration error: {e or 'Unknown error'}")
+
 
 @router.post("/login", response_model=TokenResponse)
 async def login_user(user: UserLogin):
-    pass
+    try:
+        logger.info(f"Logging in user: {user.email}")
+        response = await supabase_service.sign_in(user.email, user.password)
+
+        if not response or not response.session:
+            raise HTTPException(status_code=401, detail="Login failed: No session returned")
+
+        return TokenResponse(
+            access_token=response.session.access_token,
+            user_id=response.user.id
+        )
+
+    except Exception as e:
+        logger.error(f"Login error: {str(e)}")
+        raise HTTPException(status_code=401, detail=f"Login error: {str(e)}")
 
 @router.post("/logout")
 async def logout_user():
-    pass
-
-@router.post("/test-signup")
-async def test_signup(user: UserCreate):
-    try:
-        logger.info(f"Received signup request for email: {user.email}")
-        response = await supabase_service.sign_up(user.email, user.password, user.full_name)
-        logger.info("Signup successful, returning response")
-        return {"message": "Sign up successful", "user": response.user}
-    except Exception as e:
-        error_msg = f"Test signup error: {str(e)}"
-        logger.error(error_msg)
-        raise HTTPException(status_code=400, detail=error_msg)
-
-@router.post("/test-signin")
-async def test_signin(user: UserLogin):
-    try:
-        response = await supabase_service.sign_in(user.email, user.password)
-        return {"message": "Sign in successful", "user": response.user}
-    except Exception as e:
-        logger.error(f"Test signin error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.post("/test-signout")
-async def test_signout():
     try:
         await supabase_service.sign_out()
-        return {"message": "Sign out successful"}
+        return {"message": "Logout successful"}
     except Exception as e:
-        logger.error(f"Test signout error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error(f"Logout error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Logout error: {str(e)}")

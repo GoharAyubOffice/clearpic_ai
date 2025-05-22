@@ -55,9 +55,15 @@ class SupabaseService:
             try:
                 logger.info("Calling auth.sign_up...")
                 auth_response = self.client.auth.sign_up({
-                    "email": email,
-                    "password": password
-                })
+    "email": email,
+    "password": password,
+    "options": {
+        "data": {
+            "full_name": full_name
+        }
+    }
+})
+
                 logger.info(f"Auth signup response: {auth_response}")
             except Exception as auth_error:
                 logger.error(f"Auth signup failed with error: {str(auth_error)}")
