@@ -274,6 +274,7 @@ export default function Home() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => window.location.href = '/auth/login'}
                 className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
               >
                 <FiLogIn className="inline-block mr-2" />
@@ -282,6 +283,7 @@ export default function Home() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => window.location.href = '/auth/signup'}
                 className="px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition-colors"
               >
                 <FiUser className="inline-block mr-2" />
@@ -317,7 +319,10 @@ export default function Home() {
               <nav className="space-y-2">
                 <motion.button
                   whileHover={{ x: 10 }}
-                  onClick={() => setActivePage('home')}
+                  onClick={() => {
+                    setActivePage('home');
+                    setIsSidebarOpen(false);
+                  }}
                   className={`flex items-center p-3 rounded-lg transition-colors w-full ${
                     activePage === 'home' 
                       ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') 
@@ -329,7 +334,11 @@ export default function Home() {
                 </motion.button>
                 <motion.button
                   whileHover={{ x: 10 }}
-                  onClick={() => setActivePage('profile')}
+                  onClick={() => {
+                    setActivePage('profile');
+                    setIsSidebarOpen(false);
+                    window.location.href = '/auth/login';
+                  }}
                   className={`flex items-center p-3 rounded-lg transition-colors w-full ${
                     activePage === 'profile' 
                       ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') 
@@ -341,7 +350,11 @@ export default function Home() {
                 </motion.button>
                 <motion.button
                   whileHover={{ x: 10 }}
-                  onClick={() => setActivePage('pricing')}
+                  onClick={() => {
+                    setActivePage('pricing');
+                    setIsSidebarOpen(false);
+                    window.location.href = '/pricing';
+                  }}
                   className={`flex items-center p-3 rounded-lg transition-colors w-full ${
                     activePage === 'pricing' 
                       ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') 
@@ -353,19 +366,11 @@ export default function Home() {
                 </motion.button>
                 <motion.button
                   whileHover={{ x: 10 }}
-                  onClick={() => setActivePage('my-images')}
-                  className={`flex items-center p-3 rounded-lg transition-colors w-full ${
-                    activePage === 'my-images' 
-                      ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') 
-                      : (isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100')
-                  }`}
-                >
-                  <FiImage className="w-5 h-5 mr-3" />
-                  My Images
-                </motion.button>
-                <motion.button
-                  whileHover={{ x: 10 }}
-                  onClick={() => setActivePage('settings')}
+                  onClick={() => {
+                    setActivePage('settings');
+                    setIsSidebarOpen(false);
+                    window.location.href = '/settings';
+                  }}
                   className={`flex items-center p-3 rounded-lg transition-colors w-full ${
                     activePage === 'settings' 
                       ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') 
@@ -531,79 +536,6 @@ export default function Home() {
                 </motion.div>
               </div>
 
-              {/* Stats Section */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.6 }}
-                >
-                  <div className="text-3xl font-bold text-blue-400 mb-2">10K+</div>
-                  <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Images Processed</div>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.7 }}
-                >
-                  <div className="text-3xl font-bold text-purple-400 mb-2">98%</div>
-                  <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Accuracy Rate</div>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.8 }}
-                >
-                  <div className="text-3xl font-bold text-green-400 mb-2">5K+</div>
-                  <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Happy Users</div>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.9 }}
-                >
-                  <div className="text-3xl font-bold text-yellow-400 mb-2">24/7</div>
-                  <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>AI Processing</div>
-                </motion.div>
-              </div>
-
-              {/* How It Works Section */}
-              <div className="max-w-4xl mx-auto">
-                <h2 className={`text-3xl font-bold text-center mb-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>How It Works</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className={`p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}
-                  >
-                    <div className="text-2xl font-bold text-blue-400 mb-4">1</div>
-                    <h3 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Upload Your Image</h3>
-                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Simply drag and drop your image or click to select from your device.</p>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className={`p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}
-                  >
-                    <div className="text-2xl font-bold text-purple-400 mb-4">2</div>
-                    <h3 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>AI Processing</h3>
-                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Our AI automatically removes the background and prepares your image.</p>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className={`p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}
-                  >
-                    <div className="text-2xl font-bold text-green-400 mb-4">3</div>
-                    <h3 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Download & Share</h3>
-                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Download your processed image or generate a new background.</p>
-                  </motion.div>
-                </div>
-              </div>
-
               {/* Image Grid */}
               {images.length > 0 && (
                 <motion.div 
@@ -662,160 +594,6 @@ export default function Home() {
                   </AnimatePresence>
                 </motion.div>
               )}
-            </motion.div>
-          )}
-
-          {activePage === 'pricing' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="max-w-4xl mx-auto"
-            >
-              <h2 className="text-3xl font-bold mb-8">Pricing Plans</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}
-                >
-                  <h3 className="text-xl font-semibold mb-4">Free</h3>
-                  <div className="text-3xl font-bold mb-4">$0<span className="text-lg text-gray-400">/month</span></div>
-                  <ul className="space-y-2 mb-6">
-                    <li className="flex items-center">
-                      <FiCheck className="text-green-400 mr-2" />
-                      Unlimited background removal
-                    </li>
-                    <li className="flex items-center">
-                      <FiCheck className="text-green-400 mr-2" />
-                      5 AI background generations
-                    </li>
-                    <li className="flex items-center">
-                      <FiCheck className="text-green-400 mr-2" />
-                      Basic support
-                    </li>
-                  </ul>
-                  <button className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-                    Get Started
-                  </button>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className={`p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm border-2 border-blue-500`}
-                >
-                  <h3 className="text-xl font-semibold mb-4">Pro</h3>
-                  <div className="text-3xl font-bold mb-4">$9.99<span className="text-lg text-gray-400">/month</span></div>
-                  <ul className="space-y-2 mb-6">
-                    <li className="flex items-center">
-                      <FiCheck className="text-green-400 mr-2" />
-                      Unlimited background removal
-                    </li>
-                    <li className="flex items-center">
-                      <FiCheck className="text-green-400 mr-2" />
-                      50 AI background generations
-                    </li>
-                    <li className="flex items-center">
-                      <FiCheck className="text-green-400 mr-2" />
-                      Priority support
-                    </li>
-                    <li className="flex items-center">
-                      <FiCheck className="text-green-400 mr-2" />
-                      Additional credits: $0.20 per generation
-                    </li>
-                  </ul>
-                  <button className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-                    Upgrade to Pro
-                  </button>
-                </motion.div>
-              </div>
-
-              {/* Credit System Explanation */}
-              <div className={`mt-12 p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}>
-                <h3 className="text-xl font-semibold mb-4">Credit System</h3>
-                <div className="space-y-4">
-                  <p className="text-gray-400">
-                    Our AI background generation uses advanced models that require significant computational resources. 
-                    Each background generation costs 1 credit.
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                      <div className="text-2xl font-bold text-blue-400">10 Credits</div>
-                      <div className="text-gray-400">$2.00</div>
-                    </div>
-                    <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                      <div className="text-2xl font-bold text-blue-400">50 Credits</div>
-                      <div className="text-gray-400">$9.00</div>
-                    </div>
-                    <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                      <div className="text-2xl font-bold text-blue-400">100 Credits</div>
-                      <div className="text-gray-400">$16.00</div>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-4">
-                    * Credits are valid for 12 months from purchase date.
-                    <br />
-                    * Bulk purchases offer better value for frequent users.
-                    <br />
-                    * Unused credits can be carried over to the next month.
-                  </p>
-                </div>
-              </div>
-
-              {/* FAQ Section */}
-              <div className="mt-12">
-                <h3 className="text-xl font-semibold mb-6">Frequently Asked Questions</h3>
-                <div className="space-y-4">
-                  <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}>
-                    <h4 className="font-semibold mb-2">How do credits work?</h4>
-                    <p className="text-gray-400">
-                      Each AI background generation uses 1 credit. Credits can be purchased in bulk at discounted rates.
-                      Pro subscribers get 50 free credits monthly, while free users get 5 credits monthly.
-                    </p>
-                  </div>
-                  <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}>
-                    <h4 className="font-semibold mb-2">What happens to unused credits?</h4>
-                    <p className="text-gray-400">
-                      Unused credits roll over to the next month. However, they expire after 12 months from the purchase date.
-                    </p>
-                  </div>
-                  <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}>
-                    <h4 className="font-semibold mb-2">Can I upgrade my plan later?</h4>
-                    <p className="text-gray-400">
-                      Yes, you can upgrade to Pro at any time. Your remaining free credits will be added to your Pro account.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {activePage === 'settings' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="max-w-4xl mx-auto"
-            >
-              <h2 className="text-3xl font-bold mb-8">Settings</h2>
-              <div className={`p-8 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}>
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xl font-semibold mb-2">Dark Mode</h3>
-                      <p className="text-gray-400">Toggle between light and dark theme</p>
-                    </div>
-                    <button
-                      onClick={() => setIsDarkMode(!isDarkMode)}
-                      className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors"
-                    >
-                      {isDarkMode ? <FiSun className="w-6 h-6" /> : <FiMoon className="w-6 h-6" />}
-                    </button>
-                  </div>
-                  {/* Add more settings here */}
-                </div>
-              </div>
             </motion.div>
           )}
         </AnimatePresence>

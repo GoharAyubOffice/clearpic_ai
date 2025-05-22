@@ -7,9 +7,10 @@ out/
 build/
 dist/
 
-# Ignore environment files except .env
+# Ignore environment files except .env and .env.local
 .env.*
 !.env
+!.env.local
 
 # Ignore system files
 .DS_Store
