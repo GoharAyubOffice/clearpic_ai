@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiUpload, FiDownload, FiTrash2, FiImage, FiRefreshCw, FiCheck, FiMenu, FiX, FiUser, FiCreditCard, FiLogIn, FiHome, FiSettings, FiWind } from 'react-icons/fi';
+import { FiUpload, FiDownload, FiTrash2, FiImage, FiRefreshCw, FiCheck, FiMenu, FiX, FiUser, FiCreditCard, FiLogIn, FiHome, FiSettings, FiWind, FiSun, FiMoon, FiGithub, FiTwitter, FiLinkedin } from 'react-icons/fi';
 import JSZip from 'jszip';
 
 interface Image {
@@ -25,10 +25,29 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const [isRewritingPrompt, setIsRewritingPrompt] = useState(false);
+  const [activePage, setActivePage] = useState('home');
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    if (isSidebarOpen) {
+      document.addEventListener('mousemove', handleMouseLeave);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseLeave);
+    };
+  }, [isSidebarOpen]);
 
   const handleFileSelect = async (files: FileList) => {
     setIsUploading(true);
@@ -229,9 +248,9 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-gray-50 to-gray-100'} ${isDarkMode ? 'text-white' : 'text-gray-900'} transition-colors duration-300`}>
       {/* Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-lg border-b border-gray-700 z-40">
+      <nav className={`fixed top-0 left-0 right-0 ${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-lg border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} z-40`}>
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
@@ -239,7 +258,7 @@ export default function Home() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 rounded-lg hover:bg-gray-700"
+                className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
               >
                 <FiMenu className="w-6 h-6" />
               </motion.button>
@@ -255,7 +274,7 @@ export default function Home() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 transition-colors"
+                className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
               >
                 <FiLogIn className="inline-block mr-2" />
                 Sign In
@@ -263,7 +282,7 @@ export default function Home() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 transition-colors"
+                className="px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition-colors"
               >
                 <FiUser className="inline-block mr-2" />
                 Sign Up
@@ -277,10 +296,11 @@ export default function Home() {
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.div
+            ref={sidebarRef}
             initial={{ x: -300 }}
             animate={{ x: 0 }}
             exit={{ x: -300 }}
-            className="fixed inset-y-0 left-0 w-64 bg-gray-800 shadow-xl z-50"
+            className={`fixed inset-y-0 left-0 w-64 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-xl z-50`}
           >
             <div className="p-4">
               <div className="flex justify-between items-center mb-8">
@@ -289,52 +309,72 @@ export default function Home() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsSidebarOpen(false)}
-                  className="p-2 rounded-lg hover:bg-gray-700"
+                  className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                 >
                   <FiX className="w-6 h-6" />
                 </motion.button>
               </div>
               <nav className="space-y-2">
-                <motion.a
+                <motion.button
                   whileHover={{ x: 10 }}
-                  href="#"
-                  className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
+                  onClick={() => setActivePage('home')}
+                  className={`flex items-center p-3 rounded-lg transition-colors w-full ${
+                    activePage === 'home' 
+                      ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') 
+                      : (isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100')
+                  }`}
                 >
                   <FiHome className="w-5 h-5 mr-3" />
                   Home
-                </motion.a>
-                <motion.a
+                </motion.button>
+                <motion.button
                   whileHover={{ x: 10 }}
-                  href="#"
-                  className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
+                  onClick={() => setActivePage('profile')}
+                  className={`flex items-center p-3 rounded-lg transition-colors w-full ${
+                    activePage === 'profile' 
+                      ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') 
+                      : (isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100')
+                  }`}
                 >
                   <FiUser className="w-5 h-5 mr-3" />
                   Profile
-                </motion.a>
-                <motion.a
+                </motion.button>
+                <motion.button
                   whileHover={{ x: 10 }}
-                  href="#"
-                  className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
+                  onClick={() => setActivePage('pricing')}
+                  className={`flex items-center p-3 rounded-lg transition-colors w-full ${
+                    activePage === 'pricing' 
+                      ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') 
+                      : (isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100')
+                  }`}
                 >
                   <FiCreditCard className="w-5 h-5 mr-3" />
                   Pricing
-                </motion.a>
-                <motion.a
+                </motion.button>
+                <motion.button
                   whileHover={{ x: 10 }}
-                  href="#"
-                  className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
+                  onClick={() => setActivePage('my-images')}
+                  className={`flex items-center p-3 rounded-lg transition-colors w-full ${
+                    activePage === 'my-images' 
+                      ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') 
+                      : (isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100')
+                  }`}
                 >
                   <FiImage className="w-5 h-5 mr-3" />
                   My Images
-                </motion.a>
-                <motion.a
+                </motion.button>
+                <motion.button
                   whileHover={{ x: 10 }}
-                  href="#"
-                  className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
+                  onClick={() => setActivePage('settings')}
+                  className={`flex items-center p-3 rounded-lg transition-colors w-full ${
+                    activePage === 'settings' 
+                      ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') 
+                      : (isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100')
+                  }`}
                 >
                   <FiSettings className="w-5 h-5 mr-3" />
                   Settings
-                </motion.a>
+                </motion.button>
               </nav>
             </div>
           </motion.div>
@@ -343,143 +383,490 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 pt-24 pb-8">
-        {/* Upload Box */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-2xl mx-auto mb-12"
-        >
-          <div
-            ref={dropZoneRef}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300 ${
-              isDragging ? 'border-blue-500 bg-blue-500/10' : 'border-gray-600 hover:border-blue-400'
-            }`}
-          >
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
-              accept="image/*"
-              multiple
-              className="hidden"
-            />
-            <FiUpload className="w-16 h-16 mx-auto mb-4 text-blue-400" />
-            <p className="text-xl mb-2">Drag & drop images here</p>
-            <p className="text-gray-400">or click to select files</p>
-          </div>
-
-          {images.length > 0 && (
-            <div className="mt-6 flex justify-center space-x-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={processAllImages}
-                disabled={isProcessing || !images.some(img => !img.processed)}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  isProcessing || !images.some(img => !img.processed)
-                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                    : 'bg-green-500 text-white hover:bg-green-600'
-                }`}
+        <AnimatePresence mode="wait">
+          {activePage === 'home' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-12"
+            >
+              {/* Upload Box */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="max-w-2xl mx-auto"
               >
-                {isProcessing ? (
-                  <FiRefreshCw className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    <FiRefreshCw className="inline-block mr-2" />
-                    Process All
-                  </>
+                <div
+                  ref={dropZoneRef}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300 ${
+                    isDragging 
+                      ? 'border-blue-500 bg-blue-500/10' 
+                      : isDarkMode 
+                        ? 'border-gray-600 hover:border-blue-400' 
+                        : 'border-gray-300 hover:border-blue-400'
+                  }`}
+                >
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                  />
+                  <FiUpload className="w-16 h-16 mx-auto mb-4 text-blue-400" />
+                  <p className={`text-xl mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Drag & drop images here</p>
+                  <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>or click to select files</p>
+                </div>
+
+                {images.length > 0 && (
+                  <div className="mt-6 flex justify-center space-x-4">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={processAllImages}
+                      disabled={isProcessing || !images.some(img => !img.processed)}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        isProcessing || !images.some(img => !img.processed)
+                          ? (isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500')
+                          : 'bg-green-500 text-white hover:bg-green-600'
+                      }`}
+                    >
+                      {isProcessing ? (
+                        <FiRefreshCw className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <>
+                          <FiRefreshCw className="inline-block mr-2" />
+                          Process All
+                        </>
+                      )}
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleClearImages}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        isDarkMode 
+                          ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' 
+                          : 'bg-red-100 text-red-600 hover:bg-red-200'
+                      }`}
+                    >
+                      <FiTrash2 className="inline-block mr-2" />
+                      Clear All
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={downloadAll}
+                      disabled={!images.some(img => img.processed)}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        images.some(img => img.processed)
+                          ? 'bg-blue-500 text-white hover:bg-blue-600'
+                          : (isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500')
+                      }`}
+                    >
+                      <FiDownload className="inline-block mr-2" />
+                      Download All
+                    </motion.button>
+                  </div>
                 )}
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleClearImages}
-                className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
-              >
-                <FiTrash2 className="inline-block mr-2" />
-                Clear All
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={downloadAll}
-                disabled={!images.some(img => img.processed)}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  images.some(img => img.processed)
-                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                    : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                <FiDownload className="inline-block mr-2" />
-                Download All
-              </motion.button>
-            </div>
-          )}
-        </motion.div>
+              </motion.div>
 
-        {/* Image Grid */}
-        {images.length > 0 && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4"
-          >
-            <AnimatePresence>
-              {images.map((image) => (
+              {/* Hero Section */}
+              <div className="text-center max-w-3xl mx-auto">
+                <motion.h1 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500"
+                >
+                  Transform Your Images with AI
+                </motion.h1>
+                <motion.p 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-xl text-gray-300 mb-8"
+                >
+                  Remove backgrounds and create stunning compositions with our advanced AI technology
+                </motion.p>
+              </div>
+
+              {/* Features Section */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                 <motion.div
-                  key={image.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className={`p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}
+                >
+                  <FiImage className="w-12 h-12 text-blue-400 mb-4" />
+                  <h3 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Background Removal</h3>
+                  <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Remove backgrounds from any image with perfect precision using our advanced AI model.</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className={`p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}
+                >
+                  <FiWind className="w-12 h-12 text-purple-400 mb-4" />
+                  <h3 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>AI Background Generation</h3>
+                  <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Create stunning new backgrounds using AI-powered text-to-image generation.</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className={`p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}
+                >
+                  <FiRefreshCw className="w-12 h-12 text-green-400 mb-4" />
+                  <h3 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Smart Composition</h3>
+                  <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Seamlessly blend subjects with new backgrounds for professional-looking results.</p>
+                </motion.div>
+              </div>
+
+              {/* Stats Section */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center">
+                <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="relative group"
+                  transition={{ delay: 0.6 }}
                 >
-                  <div className="aspect-square rounded-lg overflow-hidden bg-gray-700">
-                    <img
-                      src={image.processed || image.original}
-                      alt="Processed"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleOpenImage(image)}
-                        className="p-2 bg-blue-500 rounded-full hover:bg-blue-600 transition-colors"
+                  <div className="text-3xl font-bold text-blue-400 mb-2">10K+</div>
+                  <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Images Processed</div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.7 }}
+                >
+                  <div className="text-3xl font-bold text-purple-400 mb-2">98%</div>
+                  <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Accuracy Rate</div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.8 }}
+                >
+                  <div className="text-3xl font-bold text-green-400 mb-2">5K+</div>
+                  <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Happy Users</div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.9 }}
+                >
+                  <div className="text-3xl font-bold text-yellow-400 mb-2">24/7</div>
+                  <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>AI Processing</div>
+                </motion.div>
+              </div>
+
+              {/* How It Works Section */}
+              <div className="max-w-4xl mx-auto">
+                <h2 className={`text-3xl font-bold text-center mb-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>How It Works</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className={`p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}
+                  >
+                    <div className="text-2xl font-bold text-blue-400 mb-4">1</div>
+                    <h3 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Upload Your Image</h3>
+                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Simply drag and drop your image or click to select from your device.</p>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className={`p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}
+                  >
+                    <div className="text-2xl font-bold text-purple-400 mb-4">2</div>
+                    <h3 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>AI Processing</h3>
+                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Our AI automatically removes the background and prepares your image.</p>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className={`p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}
+                  >
+                    <div className="text-2xl font-bold text-green-400 mb-4">3</div>
+                    <h3 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Download & Share</h3>
+                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Download your processed image or generate a new background.</p>
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Image Grid */}
+              {images.length > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4"
+                >
+                  <AnimatePresence>
+                    {images.map((image) => (
+                      <motion.div
+                        key={image.id}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="relative group"
                       >
-                        <FiImage className="w-5 h-5" />
-                      </motion.button>
-                      {!image.processed && (
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => processImage(image)}
-                          className="p-2 bg-green-500 rounded-full hover:bg-green-600 transition-colors"
-                        >
-                          <FiRefreshCw className="w-5 h-5" />
-                        </motion.button>
-                      )}
-                      {image.processed && (
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => downloadImage(image)}
-                          className="p-2 bg-blue-500 rounded-full hover:bg-blue-600 transition-colors"
-                        >
-                          <FiDownload className="w-5 h-5" />
-                        </motion.button>
-                      )}
+                        <div className={`aspect-square rounded-lg overflow-hidden ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                          <img
+                            src={image.processed || image.original}
+                            alt="Processed"
+                            className="w-full h-full object-cover"
+                          />
+                          <div className={`absolute inset-0 ${isDarkMode ? 'bg-black/50' : 'bg-black/30'} opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2`}>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => handleOpenImage(image)}
+                              className={`p-2 ${isDarkMode ? 'bg-blue-500 rounded-full hover:bg-blue-600' : 'bg-blue-100 rounded-full hover:bg-blue-200'} transition-colors`}
+                            >
+                              <FiImage className="w-5 h-5" />
+                            </motion.button>
+                            {!image.processed && (
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => processImage(image)}
+                                className={`p-2 ${isDarkMode ? 'bg-green-500 rounded-full hover:bg-green-600' : 'bg-green-100 rounded-full hover:bg-green-200'} transition-colors`}
+                              >
+                                <FiRefreshCw className="w-5 h-5" />
+                              </motion.button>
+                            )}
+                            {image.processed && (
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => downloadImage(image)}
+                                className={`p-2 ${isDarkMode ? 'bg-blue-500 rounded-full hover:bg-blue-600' : 'bg-blue-100 rounded-full hover:bg-blue-200'} transition-colors`}
+                              >
+                                <FiDownload className="w-5 h-5" />
+                              </motion.button>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+
+          {activePage === 'pricing' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="max-w-4xl mx-auto"
+            >
+              <h2 className="text-3xl font-bold mb-8">Pricing Plans</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}
+                >
+                  <h3 className="text-xl font-semibold mb-4">Free</h3>
+                  <div className="text-3xl font-bold mb-4">$0<span className="text-lg text-gray-400">/month</span></div>
+                  <ul className="space-y-2 mb-6">
+                    <li className="flex items-center">
+                      <FiCheck className="text-green-400 mr-2" />
+                      Unlimited background removal
+                    </li>
+                    <li className="flex items-center">
+                      <FiCheck className="text-green-400 mr-2" />
+                      5 AI background generations
+                    </li>
+                    <li className="flex items-center">
+                      <FiCheck className="text-green-400 mr-2" />
+                      Basic support
+                    </li>
+                  </ul>
+                  <button className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    Get Started
+                  </button>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className={`p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm border-2 border-blue-500`}
+                >
+                  <h3 className="text-xl font-semibold mb-4">Pro</h3>
+                  <div className="text-3xl font-bold mb-4">$9.99<span className="text-lg text-gray-400">/month</span></div>
+                  <ul className="space-y-2 mb-6">
+                    <li className="flex items-center">
+                      <FiCheck className="text-green-400 mr-2" />
+                      Unlimited background removal
+                    </li>
+                    <li className="flex items-center">
+                      <FiCheck className="text-green-400 mr-2" />
+                      50 AI background generations
+                    </li>
+                    <li className="flex items-center">
+                      <FiCheck className="text-green-400 mr-2" />
+                      Priority support
+                    </li>
+                    <li className="flex items-center">
+                      <FiCheck className="text-green-400 mr-2" />
+                      Additional credits: $0.20 per generation
+                    </li>
+                  </ul>
+                  <button className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    Upgrade to Pro
+                  </button>
+                </motion.div>
+              </div>
+
+              {/* Credit System Explanation */}
+              <div className={`mt-12 p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}>
+                <h3 className="text-xl font-semibold mb-4">Credit System</h3>
+                <div className="space-y-4">
+                  <p className="text-gray-400">
+                    Our AI background generation uses advanced models that require significant computational resources. 
+                    Each background generation costs 1 credit.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                      <div className="text-2xl font-bold text-blue-400">10 Credits</div>
+                      <div className="text-gray-400">$2.00</div>
+                    </div>
+                    <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                      <div className="text-2xl font-bold text-blue-400">50 Credits</div>
+                      <div className="text-gray-400">$9.00</div>
+                    </div>
+                    <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                      <div className="text-2xl font-bold text-blue-400">100 Credits</div>
+                      <div className="text-gray-400">$16.00</div>
                     </div>
                   </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        )}
+                  <p className="text-sm text-gray-500 mt-4">
+                    * Credits are valid for 12 months from purchase date.
+                    <br />
+                    * Bulk purchases offer better value for frequent users.
+                    <br />
+                    * Unused credits can be carried over to the next month.
+                  </p>
+                </div>
+              </div>
+
+              {/* FAQ Section */}
+              <div className="mt-12">
+                <h3 className="text-xl font-semibold mb-6">Frequently Asked Questions</h3>
+                <div className="space-y-4">
+                  <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}>
+                    <h4 className="font-semibold mb-2">How do credits work?</h4>
+                    <p className="text-gray-400">
+                      Each AI background generation uses 1 credit. Credits can be purchased in bulk at discounted rates.
+                      Pro subscribers get 50 free credits monthly, while free users get 5 credits monthly.
+                    </p>
+                  </div>
+                  <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}>
+                    <h4 className="font-semibold mb-2">What happens to unused credits?</h4>
+                    <p className="text-gray-400">
+                      Unused credits roll over to the next month. However, they expire after 12 months from the purchase date.
+                    </p>
+                  </div>
+                  <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}>
+                    <h4 className="font-semibold mb-2">Can I upgrade my plan later?</h4>
+                    <p className="text-gray-400">
+                      Yes, you can upgrade to Pro at any time. Your remaining free credits will be added to your Pro account.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activePage === 'settings' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="max-w-4xl mx-auto"
+            >
+              <h2 className="text-3xl font-bold mb-8">Settings</h2>
+              <div className={`p-8 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-white/50'} backdrop-blur-sm`}>
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xl font-semibold mb-2">Dark Mode</h3>
+                      <p className="text-gray-400">Toggle between light and dark theme</p>
+                    </div>
+                    <button
+                      onClick={() => setIsDarkMode(!isDarkMode)}
+                      className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors"
+                    >
+                      {isDarkMode ? <FiSun className="w-6 h-6" /> : <FiMoon className="w-6 h-6" />}
+                    </button>
+                  </div>
+                  {/* Add more settings here */}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
+
+      {/* Footer */}
+      <footer className={`mt-20 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <h3 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ClearPic.AI</h3>
+              <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Transform your images with advanced AI technology.</p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Quick Links</h4>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Home</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Features</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Pricing</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">About</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Resources</h4>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Documentation</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">API Reference</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Support</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Connect</h4>
+              <div className="flex space-x-4">
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <FiGithub className="w-6 h-6" />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <FiTwitter className="w-6 h-6" />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <FiLinkedin className="w-6 h-6" />
+                </a>
+              </div>
+            </div>
+          </div>
+          <div className="mt-12 pt-8 border-t border-gray-700 text-center text-gray-400">
+            <p>&copy; 2024 ClearPic.AI. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
 
       {/* Background Replacement Modal */}
       <AnimatePresence>
@@ -494,11 +881,11 @@ export default function Home() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gray-800 rounded-xl p-6 max-w-lg w-full"
+              className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-6 max-w-lg w-full`}
             >
-              <h2 className="text-xl font-semibold mb-4">Replace Background</h2>
+              <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Replace Background</h2>
               <div className="space-y-4">
-                <div className="aspect-video rounded-lg overflow-hidden bg-gray-700">
+                <div className={`aspect-video rounded-lg overflow-hidden ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
                   <img
                     src={selectedImage.processed || selectedImage.original}
                     alt="Selected"
@@ -511,7 +898,7 @@ export default function Home() {
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder="Describe the new background..."
-                    className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-12"
+                    className={`w-full px-4 py-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-12 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                   />
                   <button
                     onClick={handleRewritePrompt}
@@ -527,7 +914,7 @@ export default function Home() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setSelectedImage(null)}
-                    className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
+                    className={`px-4 py-2 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} rounded-lg transition-colors`}
                   >
                     Cancel
                   </motion.button>
@@ -538,7 +925,7 @@ export default function Home() {
                     disabled={!prompt || isReplacingBg}
                     className={`px-4 py-2 rounded-lg transition-colors ${
                       !prompt || isReplacingBg
-                        ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                        ? (isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500')
                         : 'bg-blue-500 text-white hover:bg-blue-600'
                     }`}
                   >

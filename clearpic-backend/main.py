@@ -9,6 +9,7 @@ import os
 import json
 import logging
 from typing import List, Dict
+from routes import webhooks, auth, credits, subscription
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +30,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(credits.router, prefix="/credits", tags=["credits"])
+app.include_router(subscription.router, prefix="/subscription", tags=["subscription"])
 
 # Root endpoint
 @app.get("/")
