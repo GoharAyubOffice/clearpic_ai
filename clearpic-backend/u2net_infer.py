@@ -50,16 +50,49 @@ def apply_mask(image_data, mask):
     _, buffer = cv2.imencode('.png', result)
     return buffer.tobytes()
 
-def remove_background(image_data):
-    net = load_model()
-    original_img, transformed = preprocess_image(image_data)
-    if torch.cuda.is_available():
-        inputs = transformed.unsqueeze(0).cuda()
-    else:
-        inputs = transformed.unsqueeze(0)
+def remove_background(image_path: str) -> str:
+    try:
+        net = load_model()
+        
+        # Read the image
+        image = cv2.imread(image_path)
+        if image is None:
+            raise Exception("Failed to read input image")
+            
+        # Preprocess the image
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Resize((320, 320)),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        
+        # Convert BGR to RGB
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image_tensor = transform(Image.fromarray(image_rgb))
+        
+        if torch.cuda.is_available():
+            inputs = image_tensor.unsqueeze(0).cuda()
+        else:
+            inputs = image_tensor.unsqueeze(0)
 
-    with torch.no_grad():
-        d1, *_ = net(inputs)
-        mask = d1[:, 0, :, :]
-        mask = postprocess_mask(mask)
-        return apply_mask(image_data, mask)
+        with torch.no_grad():
+            d1, *_ = net(inputs)
+            mask = d1[:, 0, :, :]
+            mask = postprocess_mask(mask)
+            
+            # Resize mask to original image size
+            mask = cv2.resize(mask, (image.shape[1], image.shape[0]))
+            
+            # Create alpha channel
+            alpha = mask.astype(float) / 255
+            b, g, r = cv2.split(image)
+            rgba = [b, g, r, (alpha * 255).astype(np.uint8)]
+            result = cv2.merge(rgba)
+            
+            # Save the result
+            result_path = "result_removed_bg.png"
+            cv2.imwrite(result_path, result)
+            return result_path
+            
+    except Exception as e:
+        raise Exception(f"Failed to remove background: {str(e)}")

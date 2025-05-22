@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiUpload, FiDownload, FiTrash2, FiImage, FiRefreshCw, FiCheck, FiMenu, FiX, FiUser, FiCreditCard, FiLogIn, FiHome, FiSettings } from 'react-icons/fi';
+import { FiUpload, FiDownload, FiTrash2, FiImage, FiRefreshCw, FiCheck, FiMenu, FiX, FiUser, FiCreditCard, FiLogIn, FiHome, FiSettings, FiWind } from 'react-icons/fi';
 import JSZip from 'jszip';
 
 interface Image {
@@ -24,6 +24,7 @@ export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+  const [isRewritingPrompt, setIsRewritingPrompt] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -122,13 +123,16 @@ export default function Home() {
     try {
       setIsReplacingBg(true);
       const formData = new FormData();
-      const response = await fetch(selectedImage.original);
+      const response = await fetch(selectedImage.processed || selectedImage.original);
       const blob = await response.blob();
       formData.append('file', blob, 'image.png');
       formData.append('prompt', prompt);
 
       const result = await axios.post('http://127.0.0.1:8000/replace-bg', formData, {
-        responseType: 'blob'
+        responseType: 'blob',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       const processedUrl = URL.createObjectURL(result.data);
@@ -199,6 +203,29 @@ export default function Home() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const handleRewritePrompt = async () => {
+    if (!prompt.trim()) return;
+    
+    try {
+      setIsRewritingPrompt(true);
+      const formData = new FormData();
+      formData.append('prompt', prompt);
+      
+      const response = await axios.post('http://127.0.0.1:8000/rewrite-prompt', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      setPrompt(response.data.rewritten_prompt);
+    } catch (error) {
+      console.error('Error rewriting prompt:', error);
+      alert('Failed to rewrite prompt. Please try again.');
+    } finally {
+      setIsRewritingPrompt(false);
+    }
   };
 
   return (
@@ -478,13 +505,23 @@ export default function Home() {
                     className="w-full h-full object-contain"
                   />
                 </div>
-                <input
-                  type="text"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe the new background..."
-                  className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Describe the new background..."
+                    className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-12"
+                  />
+                  <button
+                    onClick={handleRewritePrompt}
+                    disabled={!prompt.trim() || isRewritingPrompt}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-blue-400 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Rewrite prompt with AI"
+                  >
+                    <FiWind className={isRewritingPrompt ? 'animate-spin' : ''} />
+                  </button>
+                </div>
                 <div className="flex justify-end space-x-4">
                   <motion.button
                     whileHover={{ scale: 1.05 }}
