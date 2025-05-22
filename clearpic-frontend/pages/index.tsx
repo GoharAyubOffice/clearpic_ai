@@ -1,25 +1,73 @@
 'use client';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import axios from 'axios';
+import JSZip from 'jszip';
+
+interface ImageResult {
+  id: string;
+  originalFile: File;
+  originalUrl: string;
+  processedUrl: string | null;
+  loading: boolean;
+  error: string | null;
+}
 
 export default function Home() {
-  const [image, setImage] = useState<File | null>(null);
-  const [result, setResult] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [images, setImages] = useState<ImageResult[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleUpload = async () => {
-    if (!image) {
-      alert("Please select an image first.");
-      return;
+  const handleFileSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    try {
+      const processedFiles = await Promise.all(
+        Array.from(files).map(async (file) => {
+          return {
+            id: Math.random().toString(36).substr(2, 9),
+            originalFile: file,
+            originalUrl: URL.createObjectURL(file),
+            processedUrl: null,
+            loading: false,
+            error: null
+          };
+        })
+      );
+
+      setImages(prev => [...prev, ...processedFiles]);
+    } catch (error) {
+      console.error('Error processing files:', error);
+    } finally {
+      setUploading(false);
     }
+  };
 
-    console.log("Uploading file:", image);
+  const onDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleFileSelect(e.dataTransfer.files);
+  }, []);
 
-    setLoading(true);
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const onDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const processImage = async (image: ImageResult) => {
     const formData = new FormData();
-    formData.append('file', image); // Must match FastAPI's field name
+    formData.append('file', image.originalFile);
 
     try {
+      if (!image.originalFile.type.startsWith('image/')) {
+        throw new Error('File must be an image');
+      }
+
       const res = await axios.post('http://127.0.0.1:8000/remove-bg', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -27,117 +75,255 @@ export default function Home() {
         responseType: 'blob',
       });
 
-      const blob = new Blob([res.data], { type: 'image/png' });
-      const url = URL.createObjectURL(blob);
-      setResult(url);
+      if (res.status === 200 && res.data) {
+        const blob = new Blob([res.data], { type: 'image/png' });
+        const url = URL.createObjectURL(blob);
+        
+        setImages(prev => prev.map(img => 
+          img.id === image.id 
+            ? { ...img, processedUrl: url, loading: false, error: null }
+            : img
+        ));
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (err) {
       console.error('Upload failed', err);
-      alert('Something went wrong. Check backend.');
-    } finally {
-      setLoading(false);
+      let errorMessage = 'Processing failed. Please try again.';
+      
+      if (axios.isAxiosError(err)) {
+        if (err.code === 'ECONNREFUSED') {
+          errorMessage = 'Cannot connect to server. Please make sure the backend is running.';
+        } else if (err.response?.data) {
+          try {
+            const reader = new FileReader();
+            reader.onload = () => {
+              try {
+                const errorData = JSON.parse(reader.result as string);
+                errorMessage = errorData.detail || errorMessage;
+              } catch {
+                // If we can't parse the error, use default message
+              }
+            };
+            reader.readAsText(err.response.data);
+          } catch {
+            // If we can't read the error data, use the status text
+            errorMessage = err.response.statusText || errorMessage;
+          }
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      setImages(prev => prev.map(img => 
+        img.id === image.id 
+          ? { ...img, error: errorMessage, loading: false }
+          : img
+      ));
     }
   };
 
-  const handleClear = () => {
-    setImage(null);
-    setResult(null);
+  const handleProcessAll = async () => {
+    setUploading(true);
+    try {
+      await Promise.all(images.map(processImage));
+    } catch (error) {
+      console.error('Error processing all images:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const downloadAll = async () => {
+    const processedImages = images.filter(img => img.processedUrl);
+    if (processedImages.length === 0) return;
+
+    try {
+      const zip = new JSZip();
+      
+      // Add each processed image to the zip
+      await Promise.all(
+        processedImages.map(async (img) => {
+          if (img.processedUrl) {
+            // Fetch the image data
+            const response = await fetch(img.processedUrl);
+            const blob = await response.blob();
+            // Add to zip with a unique filename
+            zip.file(`clearpic-${img.id}.png`, blob);
+          }
+        })
+      );
+
+      // Generate the zip file
+      const content = await zip.generateAsync({ type: 'blob' });
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(content);
+      link.download = 'clearpic-images.zip';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error creating zip file:', error);
+      alert('Failed to create zip file. Please try downloading images individually.');
+    }
+  };
+
+  const handleClear = (id?: string) => {
+    if (id) {
+      setImages(prev => prev.filter(img => img.id !== id));
+    } else {
+      setImages([]);
+    }
   };
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen p-8 bg-gray-50">
-      <h1 className="text-4xl font-bold text-gray-800 mb-6">ClearPic.ai</h1>
+    <main className="min-h-screen bg-gray-50 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-800 text-center mb-8">ClearPic.ai</h1>
 
-      <div className="w-full max-w-6xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Original Image Preview */}
-          <div className="bg-white p-6 rounded-xl shadow-lg">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Original Image</h2>
-            <div className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
-              {image ? (
-                <img
-                  src={URL.createObjectURL(image)}
-                  alt="Original"
-                  className="max-w-full max-h-full object-contain rounded-lg"
-                />
-              ) : (
-                <div className="text-center p-6">
-                  <p className="text-gray-500 mb-4">No image selected</p>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setImage(e.target.files?.[0] || null)}
-                    className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Processed Image Preview */}
-          <div className="bg-white p-6 rounded-xl shadow-lg">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Processed Image</h2>
-            <div className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
-              {result ? (
-                <img
-                  src={result}
-                  alt="Processed"
-                  className="max-w-full max-h-full object-contain rounded-lg"
-                />
-              ) : (
-                <div className="text-center p-6">
-                  <p className="text-gray-500">Processed image will appear here</p>
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Upload Box */}
+        <div 
+          className={`w-full max-w-2xl mx-auto h-48 mb-8 rounded-xl border-2 border-dashed transition-colors ${
+            isDragging 
+              ? 'border-blue-500 bg-blue-50' 
+              : 'border-gray-300 hover:border-gray-400'
+          }`}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+        >
+          <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer">
+            <svg 
+              className="w-12 h-12 text-gray-400 mb-4" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            <span className="text-lg text-gray-600 mb-2">
+              Drag and drop your images here
+            </span>
+            <span className="text-sm text-gray-500">
+              or click to browse
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => handleFileSelect(e.target.files)}
+              className="hidden"
+            />
+          </label>
         </div>
 
-        <div className="mt-8 flex justify-center gap-4">
-          <button
-            onClick={handleUpload}
-            disabled={loading || !image}
-            className={`px-8 py-3 rounded-lg font-medium transition-colors ${
-              loading || !image
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-            }`}
-          >
-            {loading ? 'Processing...' : 'Remove Background'}
-          </button>
-
-          {(image || result) && (
+        {/* Action Buttons */}
+        {images.length > 0 && (
+          <div className="flex justify-center gap-4 mb-8">
             <button
-              onClick={handleClear}
-              className="px-8 py-3 rounded-lg font-medium transition-colors bg-red-600 hover:bg-red-700 text-white"
+              onClick={handleProcessAll}
+              disabled={uploading || images.every(img => img.processedUrl)}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                uploading || images.every(img => img.processedUrl)
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
+            >
+              {uploading ? 'Processing...' : 'Process All Images'}
+            </button>
+            {images.some(img => img.processedUrl) && (
+              <button
+                onClick={downloadAll}
+                className="px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 hover:bg-green-700 text-white"
+              >
+                Download All
+              </button>
+            )}
+            <button
+              onClick={() => handleClear()}
+              className="px-4 py-2 rounded-lg font-medium transition-colors bg-red-600 hover:bg-red-700 text-white"
             >
               Clear All
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
-        {result && (
-          <div className="mt-6 text-center">
-            <a
-              href={result}
-              download="clearpic.png"
-              className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
-            >
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                />
-              </svg>
-              Download Transparent Image
-            </a>
+        {/* Preview Grid */}
+        {images.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+            {images.map((image) => (
+              <div key={image.id} className="bg-white p-3 rounded-lg shadow-sm">
+                <div className="flex gap-2">
+                  {/* Original Image */}
+                  <div className="w-1/2 aspect-square relative">
+                    <img
+                      src={image.originalUrl}
+                      alt="Original"
+                      className="w-full h-full object-contain rounded"
+                    />
+                  </div>
+
+                  {/* Processed Image */}
+                  <div className="w-1/2 aspect-square relative">
+                    {image.loading ? (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded">
+                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+                      </div>
+                    ) : image.processedUrl ? (
+                      <img
+                        src={image.processedUrl}
+                        alt="Processed"
+                        className="w-full h-full object-contain rounded"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded">
+                        <span className="text-xs text-gray-500">Waiting to process</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-2 flex justify-between items-center text-sm">
+                  {image.processedUrl && (
+                    <>
+                      <button
+                        onClick={() => image.processedUrl && window.open(image.processedUrl, '_blank')}
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        Open
+                      </button>
+                      <a
+                        href={image.processedUrl}
+                        download={`clearpic-${image.id}.png`}
+                        className="text-green-600 hover:text-green-700"
+                      >
+                        Download
+                      </a>
+                    </>
+                  )}
+                  <button
+                    onClick={() => handleClear(image.id)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    Remove
+                  </button>
+                </div>
+
+                {image.error && (
+                  <div className="mt-1 text-xs text-red-600 text-center">
+                    {image.error}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>

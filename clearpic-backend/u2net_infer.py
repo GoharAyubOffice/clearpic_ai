@@ -1,12 +1,12 @@
 import sys
 sys.path.append("./U-2-Net")
 from model.u2net import U2NET
-import os
 import torch
 import numpy as np
 from PIL import Image
 from torchvision import transforms
 import cv2
+import io
 
 
 
@@ -20,8 +20,9 @@ def load_model(model_path='U-2-Net/saved_models/u2net/u2net.pth'):
     net.eval()
     return net
 
-def preprocess_image(image_path):
-    image = Image.open(image_path).convert('RGB')
+def preprocess_image(image_data):
+    # Convert bytes to PIL Image
+    image = Image.open(io.BytesIO(image_data)).convert('RGB')
     transform = transforms.Compose([
         transforms.Resize((320, 320)),
         transforms.ToTensor(),
@@ -36,18 +37,24 @@ def postprocess_mask(mask):
     mask = (mask * 255).astype(np.uint8)
     return mask
 
-def apply_mask(image_path, mask, output_path):
-    image = cv2.imread(image_path)
+def apply_mask(image_data, mask):
+    # Convert bytes to numpy array
+    nparr = np.frombuffer(image_data, np.uint8)
+    image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    
     mask = cv2.resize(mask, (image.shape[1], image.shape[0]))
     alpha = mask.astype(float) / 255
     b, g, r = cv2.split(image)
     rgba = [b, g, r, (alpha * 255).astype(np.uint8)]
     result = cv2.merge(rgba, 4)
-    cv2.imwrite(output_path, result)
+    
+    # Convert result to bytes
+    _, buffer = cv2.imencode('.png', result)
+    return buffer.tobytes()
 
-def remove_background(input_path, output_path):
+def remove_background(image_data):
     net = load_model()
-    original_img, transformed = preprocess_image(input_path)
+    original_img, transformed = preprocess_image(image_data)
     if torch.cuda.is_available():
         inputs = transformed.unsqueeze(0).cuda()
     else:
@@ -57,7 +64,4 @@ def remove_background(input_path, output_path):
         d1, *_ = net(inputs)
         mask = d1[:, 0, :, :]
         mask = postprocess_mask(mask)
-        apply_mask(input_path, mask, output_path)
-
-    # Optional cleanup
-    os.remove(input_path)
+        return apply_mask(image_data, mask)

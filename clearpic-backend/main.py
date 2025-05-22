@@ -1,11 +1,10 @@
 from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from u2net_infer import remove_background
-import uuid
-import os
+import io
 
-# Initialize FastAP
+# Initialize FastAPI
 app = FastAPI(
     title="ClearPic.AI API",
     description="API for removing backgrounds from images using U2NET",
@@ -34,15 +33,11 @@ async def root():
 # Background removal endpoint
 @app.post("/remove-bg")
 async def remove_bg(file: UploadFile = File(...)):
-    filename = f"input_{uuid.uuid4()}.png"
-    output_path = f"output_{uuid.uuid4()}.png"
-
-    # Save uploaded file
-    with open(filename, "wb") as f:
-        f.write(await file.read())
-
-    # Process background removal
-    remove_background(input_path=filename, output_path=output_path)
-
-    # Return processed image
-    return FileResponse(output_path, media_type="image/png")
+    # Read the uploaded file into memory
+    contents = await file.read()
+    
+    # Process the image in memory
+    processed_image = remove_background(contents)
+    
+    # Return the processed image directly
+    return Response(content=processed_image, media_type="image/png")
