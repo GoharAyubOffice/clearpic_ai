@@ -10,12 +10,16 @@ interface ImageResult {
   processedUrl: string | null;
   loading: boolean;
   error: string | null;
+  isOpen: boolean;
+  isProcessing: boolean;
 }
 
 export default function Home() {
   const [images, setImages] = useState<ImageResult[]>([]);
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [prompt, setPrompt] = useState<string>('');
+  const [isReplacingBg, setIsReplacingBg] = useState<boolean>(false);
 
   const handleFileSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -30,7 +34,9 @@ export default function Home() {
             originalUrl: URL.createObjectURL(file),
             processedUrl: null,
             loading: false,
-            error: null
+            error: null,
+            isOpen: false,
+            isProcessing: false
           };
         })
       );
@@ -134,6 +140,68 @@ export default function Home() {
     }
   };
 
+  const handleOpenImage = async (image: ImageResult) => {
+    try {
+      setImages(prev => prev.map(img => 
+        img.id === image.id ? { ...img, isOpen: true } : img
+      ));
+    } catch (error) {
+      console.error('Error opening image:', error);
+    }
+  };
+
+  const handleReplaceBackground = async (image: ImageResult) => {
+    if (!prompt.trim()) {
+      alert('Please enter a prompt for the background');
+      return;
+    }
+
+    try {
+      setIsReplacingBg(true);
+      setImages(prev => prev.map(img => 
+        img.id === image.id ? { ...img, isProcessing: true } : img
+      ));
+
+      const formData = new FormData();
+      formData.append('file', image.originalFile);
+      formData.append('prompt', prompt);
+
+      const response = await axios.post('http://127.0.0.1:8000/replace-bg', formData, {
+        responseType: 'blob'
+      });
+
+      const newImageUrl = URL.createObjectURL(new Blob([response.data], { type: 'image/png' }));
+      
+      setImages(prev => prev.map(img => 
+        img.id === image.id ? {
+          ...img,
+          processedUrl: newImageUrl,
+          isProcessing: false,
+          isOpen: false
+        } : img
+      ));
+    } catch (error) {
+      console.error('Error replacing background:', error);
+      setImages(prev => prev.map(img => 
+        img.id === image.id ? {
+          ...img,
+          error: 'Failed to replace background',
+          isProcessing: false
+        } : img
+      ));
+    } finally {
+      setIsReplacingBg(false);
+    }
+  };
+
+  const handleClear = (id?: string) => {
+    if (id) {
+      setImages(prev => prev.filter(img => img.id !== id));
+    } else {
+      setImages([]);
+    }
+  };
+
   const downloadAll = async () => {
     const processedImages = images.filter(img => img.processedUrl);
     if (processedImages.length === 0) return;
@@ -141,23 +209,17 @@ export default function Home() {
     try {
       const zip = new JSZip();
       
-      // Add each processed image to the zip
       await Promise.all(
         processedImages.map(async (img) => {
           if (img.processedUrl) {
-            // Fetch the image data
             const response = await fetch(img.processedUrl);
             const blob = await response.blob();
-            // Add to zip with a unique filename
             zip.file(`clearpic-${img.id}.png`, blob);
           }
         })
       );
 
-      // Generate the zip file
       const content = await zip.generateAsync({ type: 'blob' });
-      
-      // Create download link
       const link = document.createElement('a');
       link.href = URL.createObjectURL(content);
       link.download = 'clearpic-images.zip';
@@ -167,14 +229,6 @@ export default function Home() {
     } catch (error) {
       console.error('Error creating zip file:', error);
       alert('Failed to create zip file. Please try downloading images individually.');
-    }
-  };
-
-  const handleClear = (id?: string) => {
-    if (id) {
-      setImages(prev => prev.filter(img => img.id !== id));
-    } else {
-      setImages([]);
     }
   };
 
@@ -260,62 +314,102 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
             {images.map((image) => (
               <div key={image.id} className="bg-white p-3 rounded-lg shadow-sm">
-                <div className="flex gap-2">
-                  {/* Original Image */}
-                  <div className="w-1/2 aspect-square relative">
-                    <img
-                      src={image.originalUrl}
-                      alt="Original"
-                      className="w-full h-full object-contain rounded"
-                    />
-                  </div>
-
-                  {/* Processed Image */}
-                  <div className="w-1/2 aspect-square relative">
-                    {image.loading ? (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded">
-                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
-                      </div>
-                    ) : image.processedUrl ? (
+                {image.isOpen ? (
+                  <div className="space-y-4">
+                    <div className="aspect-square relative">
                       <img
-                        src={image.processedUrl}
-                        alt="Processed"
+                        src={image.processedUrl || image.originalUrl}
+                        alt="Preview"
                         className="w-full h-full object-contain rounded"
                       />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded">
-                        <span className="text-xs text-gray-500">Waiting to process</span>
+                    </div>
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="Enter background prompt..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleReplaceBackground(image)}
+                          disabled={isReplacingBg}
+                          className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+                        >
+                          {isReplacingBg ? 'Replacing...' : 'Replace Background'}
+                        </button>
+                        <button
+                          onClick={() => setImages(prev => prev.map(img => 
+                            img.id === image.id ? { ...img, isOpen: false } : img
+                          ))}
+                          className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                        >
+                          Close
+                        </button>
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="flex gap-2">
+                      {/* Original Image */}
+                      <div className="w-1/2 aspect-square relative">
+                        <img
+                          src={image.originalUrl}
+                          alt="Original"
+                          className="w-full h-full object-contain rounded"
+                        />
+                      </div>
 
-                {/* Action Buttons */}
-                <div className="mt-2 flex justify-between items-center text-sm">
-                  {image.processedUrl && (
-                    <>
+                      {/* Processed Image */}
+                      <div className="w-1/2 aspect-square relative">
+                        {image.loading ? (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded">
+                            <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+                          </div>
+                        ) : image.processedUrl ? (
+                          <img
+                            src={image.processedUrl}
+                            alt="Processed"
+                            className="w-full h-full object-contain rounded"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded">
+                            <span className="text-xs text-gray-500">Waiting to process</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="mt-2 flex justify-between items-center text-sm">
+                      {image.processedUrl && (
+                        <>
+                          <button
+                            onClick={() => handleOpenImage(image)}
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            Open
+                          </button>
+                          <a
+                            href={image.processedUrl}
+                            download={`clearpic-${image.id}.png`}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            Download
+                          </a>
+                        </>
+                      )}
                       <button
-                        onClick={() => image.processedUrl && window.open(image.processedUrl, '_blank')}
-                        className="text-blue-600 hover:text-blue-700"
+                        onClick={() => handleClear(image.id)}
+                        className="text-red-600 hover:text-red-700"
                       >
-                        Open
+                        Remove
                       </button>
-                      <a
-                        href={image.processedUrl}
-                        download={`clearpic-${image.id}.png`}
-                        className="text-green-600 hover:text-green-700"
-                      >
-                        Download
-                      </a>
-                    </>
-                  )}
-                  <button
-                    onClick={() => handleClear(image.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    Remove
-                  </button>
-                </div>
+                    </div>
+                  </>
+                )}
 
                 {image.error && (
                   <div className="mt-1 text-xs text-red-600 text-center">

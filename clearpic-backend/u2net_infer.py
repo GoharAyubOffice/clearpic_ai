@@ -8,8 +8,6 @@ from torchvision import transforms
 import cv2
 import io
 
-
-
 def load_model(model_path='U-2-Net/saved_models/u2net/u2net.pth'):
     net = U2NET(3, 1)
     if torch.cuda.is_available():
@@ -27,7 +25,7 @@ def preprocess_image(image_data):
         transforms.Resize((320, 320)),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406],
-                             [0.229, 0.224, 0.225])
+                           [0.229, 0.224, 0.225])
     ])
     return image, transform(image)
 
