@@ -36,8 +36,18 @@ ENV/
 Thumbs.db
 
 # Project specific
-output/
-U-2-Net/
 node_modules/
 .git/
 .github/
+
+# Keep these
+!U-2-Net/
+!models/
+!routes/
+!services/
+!utils/
+!middleware/
+!database/
+!main.py
+!requirements.txt
+!vercel.build

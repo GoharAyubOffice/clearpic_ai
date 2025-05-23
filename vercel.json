@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommand": "pip install -r clearpic-backend/requirements.txt",
+  "outputDirectory": "clearpic-backend",
   "builds": [
     {
       "src": "clearpic-backend/main.py",
@@ -13,11 +15,11 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "clearpic-backend/main.py"
+      "dest": "/clearpic-backend/main.py"
     },
     {
       "src": "/(.*)",
-      "dest": "clearpic-backend/main.py"
+      "dest": "/clearpic-backend/main.py"
     }
   ],
   "env": {
