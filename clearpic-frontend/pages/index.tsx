@@ -115,7 +115,7 @@ export default function Home() {
       const blob = await response.blob();
       formData.append('file', blob, 'image.png');
 
-      const result = await axios.post('http://127.0.0.1:8000/remove-bg', formData, {
+      const result = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/remove-bg`, formData, {
         responseType: 'blob'
       });
 
@@ -147,7 +147,7 @@ export default function Home() {
       formData.append('file', blob, 'image.png');
       formData.append('prompt', prompt);
 
-      const result = await axios.post('http://127.0.0.1:8000/replace-bg', formData, {
+      const result = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/replace-bg`, formData, {
         responseType: 'blob',
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -232,7 +232,7 @@ export default function Home() {
       const formData = new FormData();
       formData.append('prompt', prompt);
       
-      const response = await axios.post('http://127.0.0.1:8000/rewrite-prompt', formData, {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/rewrite-prompt`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
