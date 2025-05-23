@@ -1,3 +1,4 @@
+-r clearpic-backend/requirements.txt
 fastapi==0.104.1
 uvicorn==0.24.0
 python-dotenv==0.19.0
