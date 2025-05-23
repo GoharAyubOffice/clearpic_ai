@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Add the parent directory to Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request
 from fastapi.responses import Response, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -5,7 +11,6 @@ from u2net_infer import remove_background
 from ai_bg_generator import generate_ai_background, compose_subject_on_background
 from openai_service import analyze_image, get_suggested_prompts, get_category_prompts, PROMPT_CATEGORIES, rewrite_prompt
 import requests
-import os
 import json
 import logging
 from typing import List, Dict
@@ -18,7 +23,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="ClearPic API")
+app = FastAPI(
+    title="ClearPic API",
+    description="API for removing backgrounds from images using U2NET",
+    version="1.0.0"
+)
 
 # Configure CORS
 app.add_middleware(
@@ -45,7 +54,16 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to ClearPic API"}
+    return {
+        "message": "Welcome to ClearPic API",
+        "status": "operational",
+        "endpoints": {
+            "/webhooks": "Stripe webhook endpoints",
+            "/auth": "Authentication endpoints",
+            "/credits": "Credit management endpoints",
+            "/subscription": "Subscription management endpoints"
+        }
+    }
 
 # Basic background removal
 @app.post("/remove-bg")

@@ -3,13 +3,24 @@
   "builds": [
     {
       "src": "clearpic-backend/api/index.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.9"
+      }
     }
   ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "clearpic-backend/api/index.py"
+    },
+    {
       "src": "/(.*)",
       "dest": "clearpic-backend/api/index.py"
     }
-  ]
+  ],
+  "env": {
+    "PYTHONPATH": "clearpic-backend"
+  }
 }
