@@ -42,6 +42,14 @@ node_modules/
 
 # Keep these
 !clearpic-backend/
+!clearpic-backend/main.py
+!clearpic-backend/routes/
+!clearpic-backend/services/
+!clearpic-backend/utils/
+!clearpic-backend/models/
+!clearpic-backend/middleware/
+!clearpic-backend/database/
+!clearpic-backend/U-2-Net/
 !requirements.txt
-!vercel.build
+!build.sh
 !vercel.json 

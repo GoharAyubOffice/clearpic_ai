@@ -1,0 +1,29 @@
+#!/bin/bash
+
+echo "Starting build process..."
+
+# Install dependencies
+echo "Installing dependencies..."
+pip install -r requirements.txt
+
+# Create necessary directories
+echo "Creating directories..."
+mkdir -p clearpic-backend/__pycache__
+mkdir -p clearpic-backend/routes/__pycache__
+mkdir -p clearpic-backend/services/__pycache__
+mkdir -p clearpic-backend/utils/__pycache__
+mkdir -p clearpic-backend/models/__pycache__
+mkdir -p clearpic-backend/middleware/__pycache__
+mkdir -p clearpic-backend/database/__pycache__
+
+# Create __init__.py files
+echo "Creating __init__.py files..."
+touch clearpic-backend/__init__.py
+touch clearpic-backend/routes/__init__.py
+touch clearpic-backend/services/__init__.py
+touch clearpic-backend/utils/__init__.py
+touch clearpic-backend/models/__init__.py
+touch clearpic-backend/middleware/__init__.py
+touch clearpic-backend/database/__init__.py
+
+echo "Build process completed." 
