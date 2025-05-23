@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: clearpic-backend
+    env: python
+    buildCommand: |
+      cd clearpic-backend
+      pip install -r requirements.txt
+      pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+    startCommand: cd clearpic-backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHONPATH
+        value: clearpic-backend
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: REPLICATE_API_TOKEN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false 
