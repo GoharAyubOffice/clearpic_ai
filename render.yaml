@@ -6,14 +6,17 @@ services:
       cd clearpic-backend
       pip install -r requirements.txt
       pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+      pip install -r U-2-Net/requirements.txt
       mkdir -p model
       cp -r U-2-Net/model/* model/
-      cp -r U-2-Net/saved_models/* model/
-      pip install -r U-2-Net/requirements.txt
-    startCommand: cd clearpic-backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+      mkdir -p U-2-Net/saved_models/u2net
+      cp -r U-2-Net/saved_models/* U-2-Net/saved_models/u2net/
+      touch model/__init__.py
+      export PYTHONPATH=$PYTHONPATH:$(pwd)
+    startCommand: cd clearpic-backend && PYTHONPATH=$PYTHONPATH:$(pwd) uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHONPATH
-        value: clearpic-backend
+        value: /opt/render/project/src/clearpic-backend
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_KEY
